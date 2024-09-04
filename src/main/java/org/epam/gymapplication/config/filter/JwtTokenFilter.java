@@ -21,6 +21,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
+import java.util.Map;
 
 @Component
 public class JwtTokenFilter extends OncePerRequestFilter {
@@ -41,13 +42,13 @@ public class JwtTokenFilter extends OncePerRequestFilter {
         String authHeader = request.getHeader("Authorization");
         String jwtToken = null;
         String username = null;
-        if (authHeader != null && authHeader.startsWith("Bearer ")) {
-            jwtToken = authHeader.substring(7);
-            username = jwtTokenService.extractUsername(jwtToken);
-        }
-        if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
-            UserDetails userDetails = userDetailsServiceImpl.loadUserByUsername(username);
-            try {
+        try {
+            if (authHeader != null && authHeader.startsWith("Bearer ")) {
+                jwtToken = authHeader.substring(7);
+                username = jwtTokenService.extractUsername(jwtToken);
+            }
+            if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
+                UserDetails userDetails = userDetailsServiceImpl.loadUserByUsername(username);
                 if (jwtTokenService.validateToken(jwtToken, userDetails)) {
                     UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
                             userDetails,
@@ -56,10 +57,10 @@ public class JwtTokenFilter extends OncePerRequestFilter {
                     authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
                     SecurityContextHolder.getContext().setAuthentication(authentication);
                 }
-            } catch (ExpiredJwtException e) {
-                handleExpiredJwtException(response, new JwtTokenExpiredException(ExceptionMessage.jwtTokenExpired()));
-                return;
             }
+        } catch (ExpiredJwtException | JwtTokenExpiredException e) {
+            handleExpiredJwtException(response, new JwtTokenExpiredException(ExceptionMessage.jwtTokenExpired()));
+            return;
         }
         filterChain.doFilter(request, response);
     }
@@ -67,9 +68,14 @@ public class JwtTokenFilter extends OncePerRequestFilter {
     private void handleExpiredJwtException(HttpServletResponse response, JwtTokenExpiredException e) throws IOException {
         response.setStatus(HttpStatus.UNAUTHORIZED.value());
         response.setContentType(MediaType.APPLICATION_JSON_VALUE);
+        ExceptionResponsePayload responsePayload = new ExceptionResponsePayload(HttpStatus.UNAUTHORIZED, e.getMessage());
         String jsonResponse = new ObjectMapper().writeValueAsString(
-                new ExceptionResponsePayload(HttpStatus.UNAUTHORIZED, e.getMessage())
+                Map.of("message", responsePayload.getMessage(),
+                        "timestamp", responsePayload.getTimestamp().toString(),
+                        "status", responsePayload.getStatus().toString(),
+                        "errorCode", responsePayload.getStatusCode())
         );
+        logger.warn("401 [JwtTokenExpiredException] - " + e.getMessage());
         response.getWriter().write(jsonResponse);
     }
 }
