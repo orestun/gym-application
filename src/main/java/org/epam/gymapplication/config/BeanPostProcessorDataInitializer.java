@@ -8,7 +8,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 @Component
-public class BeanPostProcessorDatInitializer {
+public class BeanPostProcessorDataInitializer {
 
     private final TraineeDAOImpl traineeDAO;
     private final TrainerDAOImpl trainerDAO;
@@ -23,7 +23,7 @@ public class BeanPostProcessorDatInitializer {
     @Value("${app.data-generator.enabled:false}")
     private boolean isGeneratorActivated;
 
-    public BeanPostProcessorDatInitializer(TraineeDAOImpl traineeDAO, TrainerDAOImpl trainerDAO, DataGenerator generateData) {
+    public BeanPostProcessorDataInitializer(TraineeDAOImpl traineeDAO, TrainerDAOImpl trainerDAO, DataGenerator generateData) {
         this.traineeDAO = traineeDAO;
         this.trainerDAO = trainerDAO;
         this.generateData = generateData;
@@ -32,16 +32,12 @@ public class BeanPostProcessorDatInitializer {
     @PostConstruct
     public void initializeData() {
         if (isGeneratorActivated) {
-            try {
-                for (int i = 0; i < numberOfTraineeForGenerate; i++) {
-                    traineeDAO.addTrainee(generateData.generateTrainee());
-                }
+            for (int i = 0; i < numberOfTraineeForGenerate; i++) {
+                traineeDAO.addTrainee(generateData.generateTrainee());
+            }
 
-                for (int i = 0; i < numberOfTrainerForGenerate; i++) {
-                    trainerDAO.addTrainer(generateData.generateTrainer());
-                }
-            } catch (Exception e) {
-                e.printStackTrace();  // Or use a logging framework
+            for (int i = 0; i < numberOfTrainerForGenerate; i++) {
+                trainerDAO.addTrainer(generateData.generateTrainer());
             }
         }
     }

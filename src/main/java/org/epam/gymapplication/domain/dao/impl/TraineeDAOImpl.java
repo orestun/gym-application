@@ -63,4 +63,9 @@ public class TraineeDAOImpl implements TraineeDAO {
     public List<String> findAllTraineeUsernames_ByPrefix(String prefix) {
         return traineeRepository.findAllUsernames_ByPrefix(prefix);
     }
+
+    @Override
+    public boolean existsTraineeByUsername(String username) {
+        return traineeRepository.existsByUser_Username(username);
+    }
 }

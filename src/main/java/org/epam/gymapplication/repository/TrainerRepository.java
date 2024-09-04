@@ -13,15 +13,22 @@ import java.util.Optional;
 public interface TrainerRepository extends JpaRepository<Trainer, Long> {
     Optional<Trainer> findByUser_Username(String username);
 
-    @Query(value =
-            "SELECT DISTINCT t.id AS id, trainer_u.id AS user_id, trainer_u.username, trainer_u.firth_name, trainer_u.second_name, trainer_u.is_active, t.specialization_id " +
+    @Query(value = "SELECT DISTINCT " +
+            "t.id AS id, " +
+            "trainer_u.id AS user_id, " +
+            "trainer_u.username, " +
+            "trainer_u.firth_name, " +
+            "trainer_u.second_name, " +
+            "trainer_u.is_active, " +
+            "t.specialization_id " +
             "FROM trainer t " +
             "JOIN user trainer_u ON t.user_id = trainer_u.id " +
-            "LEFT JOIN training_type ts on t.id = t.specialization_id " +
             "LEFT JOIN trainer_trainee t_t ON t.id = t_t.trainer_id " +
             "LEFT JOIN trainee tr ON t_t.trainee_id = tr.id " +
             "LEFT JOIN user trainee_u ON tr.user_id = trainee_u.id " +
-                    "WHERE trainer_u.is_active = true AND trainee_u.username = :username", nativeQuery = true)
+            "WHERE trainer_u.is_active = true " +
+            "AND (trainee_u.username is null " +
+            "OR trainee_u.username != :username)", nativeQuery = true)
     List<Trainer> findAllTrainersNotAssignedToTrainee_ByUsername(@Param("username") String username);
 
     @Transactional

@@ -1,6 +1,9 @@
 package org.epam.gymapplication.service.impl;
 
+import org.epam.gymapplication.domain.dao.TraineeDAO;
 import org.epam.gymapplication.domain.dao.TrainerDAO;
+import org.epam.gymapplication.domain.dao.impl.TraineeDAOImpl;
+import org.epam.gymapplication.domain.dao.impl.TrainerDAOImpl;
 import org.epam.gymapplication.domain.dto.AuthDTO;
 import org.epam.gymapplication.domain.dto.TrainerBasicProfileDTO;
 import org.epam.gymapplication.exception.ItemNotExistsException;
@@ -18,10 +21,12 @@ import java.util.List;
 public class TrainerService implements ITrainerService {
     private final TrainerDAO trainerDAO;
     private final PasswordEncoder passwordEncoder;
+    private final TraineeDAO traineeDAO;
 
-    public TrainerService(TrainerDAO trainerDAO, PasswordEncoder passwordEncoder) {
+    public TrainerService(TrainerDAOImpl trainerDAO, PasswordEncoder passwordEncoder, TraineeDAOImpl traineeDAO) {
         this.trainerDAO = trainerDAO;
         this.passwordEncoder = passwordEncoder;
+        this.traineeDAO = traineeDAO;
     }
 
     public Trainer getTrainerByUsername(String username) {
@@ -64,6 +69,9 @@ public class TrainerService implements ITrainerService {
     }
 
     public List<Trainer> findAllTrainersNotAssignedToTrainee_ByUsername(String username) {
+        if (!traineeDAO.existsTraineeByUsername(username)) {
+            throw new ItemNotExistsException(ExceptionMessage.traineeNotFoundByUsername(username));
+        }
         return trainerDAO.findAllTrainersNotAssignedToTrainee_ByUsername(username);
     }
 

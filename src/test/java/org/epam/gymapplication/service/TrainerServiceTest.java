@@ -1,7 +1,8 @@
 package org.epam.gymapplication.service;
 
 
-import org.epam.gymapplication.domain.dao.TrainerDAO;
+import org.epam.gymapplication.domain.dao.impl.TraineeDAOImpl;
+import org.epam.gymapplication.domain.dao.impl.TrainerDAOImpl;
 import org.epam.gymapplication.domain.dto.AuthDTO;
 import org.epam.gymapplication.domain.dto.TrainerBasicProfileDTO;
 import org.epam.gymapplication.exception.ItemNotExistsException;
@@ -29,7 +30,10 @@ import static org.mockito.Mockito.*;
 public class TrainerServiceTest {
 
     @Mock
-    TrainerDAO trainerDAO;
+    TrainerDAOImpl trainerDAO;
+
+    @Mock
+    TraineeDAOImpl traineeDAO;
 
     @Mock
     PasswordEncoder passwordEncoder;
@@ -111,6 +115,8 @@ public class TrainerServiceTest {
                 Trainer.builder().user(User.builder().username("trainer1").build()).build(),
                 Trainer.builder().user(User.builder().username("trainer2").build()).build()
         );
+        Mockito.when(traineeDAO.existsTraineeByUsername(username))
+                .thenReturn(true);
         Mockito.when(trainerDAO.findAllTrainersNotAssignedToTrainee_ByUsername(username))
                 .thenReturn(mockTrainers);
         List<Trainer> result = trainerService.findAllTrainersNotAssignedToTrainee_ByUsername(username);
@@ -118,6 +124,14 @@ public class TrainerServiceTest {
         assertEquals(mockTrainers.size(), result.size());
         assertEquals(mockTrainers, result);
         Mockito.verify(trainerDAO, Mockito.times(1)).findAllTrainersNotAssignedToTrainee_ByUsername(username);
+    }
+
+    @Test
+    void testFindAllTrainersNotAssignedToTrainee_ToNotExistedTrainee() {
+        Mockito.when(traineeDAO.existsTraineeByUsername("bad-username"))
+                .thenReturn(true);
+
+        assertThrows(ItemNotExistsException.class, () -> trainerService.getTrainerByUsername("bad-username"));
     }
 
 }

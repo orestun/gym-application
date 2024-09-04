@@ -24,19 +24,16 @@ public class SecurityConfig {
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
-        http
-                .csrf(AbstractHttpConfigurer::disable)
+        http.csrf(AbstractHttpConfigurer::disable)
                 .cors(AbstractHttpConfigurer::disable)
-                .authorizeHttpRequests(auth ->
-                        auth.requestMatchers("auth/**").permitAll()
-                                .requestMatchers("api-docs/**").permitAll()
-                                .requestMatchers("swagger-ui/**").permitAll()
-                                .requestMatchers("auth/logout").authenticated()
-                                .requestMatchers("trainer/**").authenticated()
-                                .requestMatchers("trainee/**").authenticated()
-                                .requestMatchers("training/**").authenticated())
-                .logout(logout -> logout
-                        .logoutUrl("auth/logout")
+                .authorizeHttpRequests(auth -> auth.requestMatchers("auth/**").permitAll()
+                        .requestMatchers("api-docs/**").permitAll()
+                        .requestMatchers("swagger-ui/**").permitAll()
+                        .requestMatchers("auth/logout").authenticated()
+                        .requestMatchers("trainer/**").authenticated()
+                        .requestMatchers("trainee/**").authenticated()
+                        .requestMatchers("training/**").authenticated())
+                .logout(logout -> logout.logoutUrl("auth/logout")
                         .invalidateHttpSession(true))
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .addFilterBefore(jwtTokenFilter, UsernamePasswordAuthenticationFilter.class);

@@ -11,4 +11,5 @@ public interface TraineeDAO {
     void deleteTraineeProfileByUsername(String username);
     void updateActiveStatus(String username, boolean active);
     List<String> findAllTraineeUsernames_ByPrefix(String prefix);
+    boolean existsTraineeByUsername(String username);
 }

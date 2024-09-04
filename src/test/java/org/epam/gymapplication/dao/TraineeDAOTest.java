@@ -125,4 +125,16 @@ public class TraineeDAOTest {
         assertEquals(2, result.size());
         assertEquals("testUser1", result.get(0));
     }
+
+    @Test
+    public void existTraineeByUsername(){
+        String username1 = "normal-username";
+        String username2 = "bad-username";
+
+        Mockito.when(traineeRepository.existsByUser_Username(username1)).thenReturn(true);
+        Mockito.when(traineeRepository.existsByUser_Username(username2)).thenReturn(false);
+
+        assertTrue(traineeDAO.existsTraineeByUsername(username1));
+        assertFalse(traineeDAO.existsTraineeByUsername(username2));
+    }
 }

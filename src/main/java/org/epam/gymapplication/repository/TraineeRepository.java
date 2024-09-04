@@ -28,4 +28,6 @@ public interface TraineeRepository extends JpaRepository<Trainee, Long> {
 
     @Query("select t.user.username from Trainee t where t.user.username like CONCAT(:username,'%')")
     List<String> findAllUsernames_ByPrefix(@Param("username") String username);
+
+    boolean existsByUser_Username(String username);
 }
