@@ -16,6 +16,7 @@ import org.epam.gymapplication.domain.model.Trainee;
 import org.epam.gymapplication.domain.model.Trainer;
 import org.epam.gymapplication.domain.model.Training;
 import org.epam.gymapplication.domain.model.TrainingType;
+import org.epam.gymapplication.service.ITrainingService;
 import org.epam.gymapplication.utils.ExceptionMessage;
 import org.springframework.stereotype.Service;
 
@@ -24,7 +25,7 @@ import java.util.Optional;
 import java.util.Set;
 
 @Service
-public class TrainingService {
+public class TrainingService implements ITrainingService {
 
     private final TrainingDAO trainingDAO;
     private final TrainerDAO trainerDAO;

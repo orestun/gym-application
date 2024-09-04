@@ -1,5 +1,6 @@
 package org.epam.gymapplication.service.impl;
 
+import org.epam.gymapplication.service.ILoginAttemptService;
 import org.epam.gymapplication.utils.BruceForceProtectionData;
 import org.epam.gymapplication.utils.SecurityConstants;
 import org.springframework.cache.annotation.CacheEvict;
@@ -11,7 +12,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 @Service
-public class LoginAttemptService {
+public class LoginAttemptService implements ILoginAttemptService {
 
     private final Map<String, BruceForceProtectionData> attemptCache = new HashMap<>();
 
@@ -36,9 +37,9 @@ public class LoginAttemptService {
     }
 
     public boolean isBlocked(String username) {
-        BruceForceProtectionData data =  processUser(username);
-        if (data.getAttempt() >= SecurityConstants.MAX_LOGIN_ATTEMPTS_3_FOR_SPECIFIC_TIME){
-            if(System.currentTimeMillis() - data.getLastAttemptTimeMillis() < SecurityConstants.LOCK_TIME_DURATION_5_MIN_IN_MILLIS){
+        BruceForceProtectionData data = processUser(username);
+        if (data.getAttempt() >= SecurityConstants.MAX_LOGIN_ATTEMPTS_3_FOR_SPECIFIC_TIME) {
+            if (System.currentTimeMillis() - data.getLastAttemptTimeMillis() < SecurityConstants.LOCK_TIME_DURATION_5_MIN_IN_MILLIS) {
                 return true;
             }
             clearAttempts(username);

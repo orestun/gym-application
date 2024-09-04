@@ -7,6 +7,7 @@ import org.epam.gymapplication.exception.ItemNotExistsException;
 import org.epam.gymapplication.domain.model.Trainer;
 import org.epam.gymapplication.domain.model.TrainingType;
 import org.epam.gymapplication.domain.model.User;
+import org.epam.gymapplication.service.ITrainerService;
 import org.epam.gymapplication.utils.ExceptionMessage;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -14,7 +15,7 @@ import org.springframework.stereotype.Service;
 import java.util.List;
 
 @Service
-public class TrainerService {
+public class TrainerService implements ITrainerService {
     private final TrainerDAO trainerDAO;
     private final PasswordEncoder passwordEncoder;
 
@@ -23,13 +24,13 @@ public class TrainerService {
         this.passwordEncoder = passwordEncoder;
     }
 
-    public Trainer getTrainerByUsername(String username){
+    public Trainer getTrainerByUsername(String username) {
         return trainerDAO
                 .getTrainerByUsername(username)
                 .orElseThrow(() -> new ItemNotExistsException(ExceptionMessage.trainerNotFoundByUsername(username)));
     }
 
-    public Trainer addTrainer(AuthDTO authDTO, TrainerBasicProfileDTO trainerDTO, TrainingType specialization){
+    public Trainer addTrainer(AuthDTO authDTO, TrainerBasicProfileDTO trainerDTO, TrainingType specialization) {
         User user = User.builder()
                 .firthName(trainerDTO.getFirstName())
                 .secondName(trainerDTO.getLastName())
@@ -44,7 +45,7 @@ public class TrainerService {
         return trainerDAO.addTrainer(trainer);
     }
 
-    public Trainer updateTrainer(TrainerBasicProfileDTO trainerDTO){
+    public Trainer updateTrainer(TrainerBasicProfileDTO trainerDTO) {
         Trainer trainer = getTrainerByUsername(trainerDTO.getUsername());
 
         User user = trainer.getUser();
@@ -58,11 +59,11 @@ public class TrainerService {
         return trainerDAO.updateTrainer(trainer);
     }
 
-    public void updateActiveStatusByUsername(String username, boolean isActive){
+    public void updateActiveStatusByUsername(String username, boolean isActive) {
         trainerDAO.updateActiveStatus(username, isActive);
     }
 
-    public List<Trainer> findAllTrainersNotAssignedToTrainee_ByUsername(String username){
+    public List<Trainer> findAllTrainersNotAssignedToTrainee_ByUsername(String username) {
         return trainerDAO.findAllTrainersNotAssignedToTrainee_ByUsername(username);
     }
 

@@ -25,8 +25,6 @@ public class UserDetailsServiceImpl implements UserDetailsService {
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
         Optional<User> user = userDAO.getUserByUsername(username);
-        return user.map(UserDetailsImpl::new)
-                .orElseThrow(
-                        () -> new ItemNotExistsException(ExceptionMessage.userNotFoundByUsername(username)));
+        return user.map(UserDetailsImpl::new).orElseThrow(() -> new ItemNotExistsException(ExceptionMessage.userNotFoundByUsername(username)));
     }
 }

@@ -11,6 +11,7 @@ import org.epam.gymapplication.exception.ItemNotExistsException;
 import org.epam.gymapplication.domain.model.Trainee;
 import org.epam.gymapplication.domain.model.Trainer;
 import org.epam.gymapplication.domain.model.User;
+import org.epam.gymapplication.service.ITraineeService;
 import org.epam.gymapplication.utils.ExceptionMessage;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -19,7 +20,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
-public class TraineeService {
+public class TraineeService implements ITraineeService {
 
     private final TraineeDAO traineeDAO;
     private final TrainerDAO trainerDAO;
@@ -31,11 +32,11 @@ public class TraineeService {
         this.passwordEncoder = passwordEncoder;
     }
 
-    public Trainee getTraineeByUsername(String username){
+    public Trainee getTraineeByUsername(String username) {
         return traineeDAO.getTraineeByUsername(username);
     }
 
-    public Trainee addTrainee(AuthDTO authDTO, TraineeBasicProfileDTO traineeDTO){
+    public Trainee addTrainee(AuthDTO authDTO, TraineeBasicProfileDTO traineeDTO) {
         User user = User.builder()
                 .firthName(traineeDTO.getFirstName())
                 .secondName(traineeDTO.getLastName())
@@ -45,24 +46,24 @@ public class TraineeService {
 
         Trainee trainee = Trainee.builder().user(user).build();
 
-        if(traineeDTO.getDateOfBirth() != null){
+        if (traineeDTO.getDateOfBirth() != null) {
             trainee.setDateOfBirth(traineeDTO.getDateOfBirth());
         }
-        if (traineeDTO.getAddress() != null){
+        if (traineeDTO.getAddress() != null) {
             trainee.setAddress(traineeDTO.getAddress());
         }
         return traineeDAO.addTrainee(trainee);
     }
 
-    public Trainee updateTrainee(TraineeBasicProfileDTO traineeDTO){
+    public Trainee updateTrainee(TraineeBasicProfileDTO traineeDTO) {
         Trainee trainee = traineeDAO.getTraineeByUsername(traineeDTO.getUsername());
         trainee.getUser().setFirthName(traineeDTO.getFirstName());
         trainee.getUser().setSecondName(traineeDTO.getLastName());
         trainee.getUser().setActive(traineeDTO.isActive());
-        if(traineeDTO.getDateOfBirth() != null){
+        if (traineeDTO.getDateOfBirth() != null) {
             trainee.setDateOfBirth(traineeDTO.getDateOfBirth());
         }
-        if(traineeDTO.getAddress() != null){
+        if (traineeDTO.getAddress() != null) {
             trainee.setAddress(traineeDTO.getAddress());
         }
         trainee.getUser().setActive(traineeDTO.isActive());
@@ -70,11 +71,11 @@ public class TraineeService {
     }
 
     @Transactional
-    public void deleteTraineeProfileByUsername(String username){
+    public void deleteTraineeProfileByUsername(String username) {
         traineeDAO.deleteTraineeProfileByUsername(username);
     }
 
-    public void updateActiveStatusByUsername(String username, boolean isActive){
+    public void updateActiveStatusByUsername(String username, boolean isActive) {
         traineeDAO.updateActiveStatus(username, isActive);
     }
 
@@ -89,14 +90,14 @@ public class TraineeService {
                 .toList();
     }
 
-    private Set<Trainer> getTrainerSetForTrainee_ByTrainersUsernamesList(List<String> trainerUsernamesList, Trainee trainee){
+    private Set<Trainer> getTrainerSetForTrainee_ByTrainersUsernamesList(List<String> trainerUsernamesList, Trainee trainee) {
         return mapTrainersUsernamesIntoTrainersEntity(trainerUsernamesList)
                 .stream()
                 .map(t -> addNewTraineeEntityIntoTrainer(t, trainee))
                 .collect(Collectors.toSet());
     }
 
-    private Set<Trainer> mapTrainersUsernamesIntoTrainersEntity(List<String> trainerUsernamesList){
+    private Set<Trainer> mapTrainersUsernamesIntoTrainersEntity(List<String> trainerUsernamesList) {
         return trainerUsernamesList
                 .stream()
                 .map(username -> trainerDAO.getTrainerByUsername(username)
@@ -104,7 +105,7 @@ public class TraineeService {
                 .collect(Collectors.toSet());
     }
 
-    private Trainer addNewTraineeEntityIntoTrainer(Trainer trainer, Trainee trainee){
+    private Trainer addNewTraineeEntityIntoTrainer(Trainer trainer, Trainee trainee) {
         Set<Trainee> traineeSet = trainer.getTrainee();
         traineeSet.add(trainee);
         trainer.setTrainee(traineeSet);
