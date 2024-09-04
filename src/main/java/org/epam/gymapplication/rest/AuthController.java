@@ -3,6 +3,7 @@ package org.epam.gymapplication.rest;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import jakarta.servlet.http.HttpServletRequest;
 import org.epam.gymapplication.domain.dto.*;
 import org.epam.gymapplication.repository.mapper.AuthMapper;
 import org.epam.gymapplication.domain.model.TrainingType;
@@ -42,10 +43,11 @@ public class AuthController {
             @RequestParam(value = "firthName") String firthName,
             @RequestParam(value = "lastName") String lastName,
             @RequestParam(value = "dateOfBirth", required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") Date dateOfBirth,
-            @RequestParam(value = "address", required = false) String address) {
+            @RequestParam(value = "address", required = false) String address,
+            HttpServletRequest request) {
 
         logger.info("Received request to register trainee");
-        AuthRegistrationDTO registrationDTO = authService.registerTrainee(firthName, lastName, dateOfBirth, address);
+        AuthRegistrationDTO registrationDTO = authService.registerTrainee(firthName, lastName, dateOfBirth, address, request);
         return authMapper.mapAuthRegistrationDTOToAuthRegistrationPayload(registrationDTO);
     }
 
@@ -57,12 +59,13 @@ public class AuthController {
     })
     @PostMapping("register/trainer")
     public AuthRegistrationPayload registerTrainer(@RequestParam("firthName") String firthName,
-                                       @RequestParam("lastName") String lastName,
-                                       @RequestParam("id") Long trainingTypeId){
+                                                   @RequestParam("lastName") String lastName,
+                                                   @RequestParam("id") Long trainingTypeId,
+                                                   HttpServletRequest request) {
         logger.info("Received request to register trainer");
         TrainingType trainingType = new TrainingType();
         trainingType.setId(trainingTypeId);
-        AuthRegistrationDTO registrationDTO = authService.registerTrainer(firthName, lastName, trainingType);
+        AuthRegistrationDTO registrationDTO = authService.registerTrainer(firthName, lastName, trainingType, request);
         return authMapper.mapAuthRegistrationDTOToAuthRegistrationPayload(registrationDTO);
     }
 
@@ -74,10 +77,10 @@ public class AuthController {
             @ApiResponse(responseCode = "500", description = "Internal server error"),
     })
     @GetMapping("login")
-    public ResponseEntity<Map<String, Object>> login(@RequestBody AuthPayload authPayload){
+    public ResponseEntity<?> login(@RequestBody AuthPayload authPayload, HttpServletRequest request) {
         logger.info("Received request to login '{}'", authPayload.getUsername());
         AuthDTO authDTO = authMapper.mapAuthPayloadToAuthDTO(authPayload);
-        return ResponseEntity.ok(authService.login(authDTO));
+        return ResponseEntity.ok(authService.login(authDTO, request));
     }
 
     @Operation(summary = "Change login to user")
@@ -88,10 +91,10 @@ public class AuthController {
             @ApiResponse(responseCode = "500", description = "Internal server error"),
     })
     @PutMapping("change-login")
-    public ResponseEntity<Map<String, Object>> changePassword(@RequestBody ChangeLoginPayload authPayload){
+    public ResponseEntity<Map<String, Object>> changePassword(@RequestBody ChangeLoginPayload authPayload, HttpServletRequest request) {
         logger.info("Received request to change login '{}'", authPayload.getUsername());
         ChangeLoginDTO changeLoginDTO = authMapper.mapChangeLoginPayloadToChangeLoginDTO(authPayload);
-        return ResponseEntity.ok(authService.changeLogin(changeLoginDTO));
+        return ResponseEntity.ok(authService.changeLogin(changeLoginDTO, request));
     }
 
     @Operation(summary = "Log out user")
@@ -99,7 +102,7 @@ public class AuthController {
             @ApiResponse(responseCode = "200", description = "User successfully logged out")
     })
     @GetMapping("logout")
-    public ResponseEntity<?> logout(){
+    public ResponseEntity<?> logout() {
         return ResponseEntity.ok("You have been logged out successfully");
     }
 

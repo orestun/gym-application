@@ -1,7 +1,7 @@
 package org.epam.gymapplication.service;
 
 import org.epam.gymapplication.service.impl.LoginAttemptService;
-import org.epam.gymapplication.utils.BruceForceProtectionData;
+import org.epam.gymapplication.utils.BruteForceProtectionData;
 import org.epam.gymapplication.utils.SecurityConstants;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -23,35 +23,35 @@ public class LoginAttemptServiceTest {
     @Test
     public void testProcessUser_WhenUserExists() {
         String username = "testUser";
-        BruceForceProtectionData expectedData = new BruceForceProtectionData(username);
+        BruteForceProtectionData expectedData = new BruteForceProtectionData(username);
         expectedData.setAttempt(1);
 
         loginAttemptService.updateAttempts(username, expectedData);
-        BruceForceProtectionData result = loginAttemptService.processUser(username);
+        BruteForceProtectionData result = loginAttemptService.processUser(username);
 
         assertEquals(expectedData, result);
     }
 
     @Test
     public void testProcessUser_WhenUserDoesNotExist() {
-        String username = "newUser";
+        String ipUserToken = "2345:0425:2CA1:0000:0000:0567:5673:23b5-User";
 
-        BruceForceProtectionData result = loginAttemptService.processUser(username);
+        BruteForceProtectionData result = loginAttemptService.processUser(ipUserToken);
 
         assertNotNull(result);
-        assertEquals(username, result.getUsername());
+        assertEquals(ipUserToken, result.getIpUserToken());
         assertEquals(0, result.getAttempt());
     }
 
     @Test
     public void testGetAttempts_WhenUserExists() {
         String username = "existingUser";
-        BruceForceProtectionData expectedData = new BruceForceProtectionData(username);
+        BruteForceProtectionData expectedData = new BruteForceProtectionData(username);
         expectedData.setAttempt(2);
 
         loginAttemptService.updateAttempts(username, expectedData);
 
-        BruceForceProtectionData result = loginAttemptService.getAttempts(username);
+        BruteForceProtectionData result = loginAttemptService.getAttempts(username);
 
         assertEquals(expectedData, result);
     }
@@ -60,22 +60,22 @@ public class LoginAttemptServiceTest {
     public void testGetAttempts_WhenUserDoesNotExist() {
         String username = "nonExistingUser";
 
-        BruceForceProtectionData result = loginAttemptService.getAttempts(username);
+        BruteForceProtectionData result = loginAttemptService.getAttempts(username);
 
         assertNotNull(result);
-        assertEquals(username, result.getUsername());
+        assertEquals(username, result.getIpUserToken());
         assertEquals(0, result.getAttempt());
     }
 
     @Test
     public void testUpdateAttempts() {
         String username = "userToUpdate";
-        BruceForceProtectionData data = new BruceForceProtectionData(username);
+        BruteForceProtectionData data = new BruteForceProtectionData(username);
         data.setAttempt(3);
 
         loginAttemptService.updateAttempts(username, data);
 
-        BruceForceProtectionData result = loginAttemptService.getAttempts(username);
+        BruteForceProtectionData result = loginAttemptService.getAttempts(username);
 
         assertEquals(3, result.getAttempt());
     }
@@ -83,13 +83,13 @@ public class LoginAttemptServiceTest {
     @Test
     public void testClearAttempts() {
         String username = "userToClear";
-        BruceForceProtectionData data = new BruceForceProtectionData(username);
+        BruteForceProtectionData data = new BruteForceProtectionData(username);
         data.setAttempt(2);
 
         loginAttemptService.updateAttempts(username, data);
         loginAttemptService.clearAttempts(username);
 
-        BruceForceProtectionData result = loginAttemptService.getAttempts(username);
+        BruteForceProtectionData result = loginAttemptService.getAttempts(username);
 
         assertEquals(0, result.getAttempt());
     }
@@ -97,47 +97,56 @@ public class LoginAttemptServiceTest {
     @Test
     public void testIsBlocked_UserNotBlocked() {
         String username = "userNotBlocked";
-        BruceForceProtectionData data = new BruceForceProtectionData(username);
+        String ip = "172.32.32.4";
+        String token = ip + "-" + username;
+        BruteForceProtectionData data = new BruteForceProtectionData(token);
         data.setAttempt(2);
 
-        loginAttemptService.updateAttempts(username, data);
+        loginAttemptService.updateAttempts(token, data);
 
-        assertFalse(loginAttemptService.isBlocked(username));
+        assertFalse(loginAttemptService.isBlocked(token, ip));
     }
 
     @Test
     public void testIsBlocked_UserBlocked() {
-        String username = "userBlocked";
-        BruceForceProtectionData data = new BruceForceProtectionData(username);
-        data.setAttempt(SecurityConstants.MAX_LOGIN_ATTEMPTS_3_FOR_SPECIFIC_TIME);
+        String username = "userNotBlocked";
+        String ip = "172.32.32.4";
+        String token = ip + "-" + username;
+        BruteForceProtectionData data = new BruteForceProtectionData(token);
+        data.setAttempt(SecurityConstants.MAX_LOGIN_ATTEMPTS_3);
         data.setLastAttemptTimeMillis(System.currentTimeMillis());
 
-        loginAttemptService.updateAttempts(username, data);
+        loginAttemptService.updateAttempts(token, data);
 
-        assertTrue(loginAttemptService.isBlocked(username));
+        assertTrue(loginAttemptService.isBlocked(username, ip));
     }
 
     @Test
     public void testRegisterAttempt() {
         String username = "userRegisterAttempt";
+        String ip = "172.32.32.4";
+        String token = ip + "-" + username;
 
-        loginAttemptService.registerAttempt(username);
+        loginAttemptService.registerAttempt(username, ip);
 
-        BruceForceProtectionData result = loginAttemptService.getAttempts(username);
+        BruteForceProtectionData result = loginAttemptService.getAttempts(token);
 
         assertEquals(1, result.getAttempt());
     }
 
     @Test
     public void testResetAttempts() {
-        String username = "userResetAttempts";
-        BruceForceProtectionData data = new BruceForceProtectionData(username);
+        String username = "userRegisterAttempt";
+        String ip = "172.32.32.4";
+        String token = ip + "-" + username;
+
+        BruteForceProtectionData data = new BruteForceProtectionData(token);
         data.setAttempt(3);
 
-        loginAttemptService.updateAttempts(username, data);
-        loginAttemptService.resetAttempts(username);
+        loginAttemptService.updateAttempts(token, data);
+        loginAttemptService.resetAttempts(username, ip);
 
-        BruceForceProtectionData result = loginAttemptService.getAttempts(username);
+        BruteForceProtectionData result = loginAttemptService.getAttempts(token);
 
         assertEquals(0, result.getAttempt());
     }

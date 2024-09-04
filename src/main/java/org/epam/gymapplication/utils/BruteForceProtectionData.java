@@ -5,14 +5,14 @@ import lombok.Setter;
 
 @Getter
 @Setter
-public class BruceForceProtectionData {
+public class BruteForceProtectionData {
     private int attempt;
     private long lastAttemptTimeMillis;
-    private String username;
+    private String ipUserToken;
 
-    public BruceForceProtectionData(String username) {
+    public BruteForceProtectionData(String ipUserToken) {
         this.attempt = 0;
         this.lastAttemptTimeMillis = System.currentTimeMillis();
-        this.username = username;
+        this.ipUserToken = ipUserToken;
     }
 }

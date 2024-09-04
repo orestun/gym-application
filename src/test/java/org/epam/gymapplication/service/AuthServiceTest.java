@@ -1,5 +1,6 @@
 package org.epam.gymapplication.service;
 
+import jakarta.servlet.http.HttpServletRequest;
 import org.epam.gymapplication.domain.dao.impl.UserDAOImpl;
 import org.epam.gymapplication.domain.dto.*;
 import org.epam.gymapplication.exception.BadAuthenticationDataException;
@@ -12,10 +13,7 @@ import org.epam.gymapplication.service.impl.*;
 import org.epam.gymapplication.utils.ExceptionMessage;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
-import org.mockito.Mockito;
-import org.mockito.MockitoAnnotations;
+import org.mockito.*;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -27,7 +25,7 @@ import java.util.Date;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.*;
 
 public class AuthServiceTest {
 
@@ -64,144 +62,212 @@ public class AuthServiceTest {
                 .secondName("Doe")
                 .username("testuser")
                 .password("encodedpassword")
-                .isActive(true).build();
-        Trainee trainee = Trainee.builder().user(user).build();
+                .isActive(true)
+                .build();
+        Trainee trainee = Trainee.builder()
+                .user(user)
+                .build();
 
-        Mockito.when(loginAttemptService.isBlocked(authDTO.getUsername()))
-                .thenReturn(false);
-        Authentication authentication = Mockito.mock(Authentication.class);
-        Mockito.when(authenticationManager.authenticate(any(UsernamePasswordAuthenticationToken.class)))
-                .thenReturn(authentication);
-        Mockito.when(authentication.isAuthenticated())
-                .thenReturn(true);
-        Mockito.when(userService.generateUniqueUsername("John", "Doe")).thenReturn("testuser");
-        Mockito.when(userService.generateRandom_10CharsPassword()).thenReturn("password123".toCharArray());
-        Mockito.when(traineeService.addTrainee(any(AuthDTO.class),any(TraineeBasicProfileDTO.class)))
-                .thenReturn(trainee);
-        Mockito.when(jwtTokenService.generateToken("testuser"))
-                .thenReturn("jwt-test-token");
+        try (MockedStatic<IpService> mockedStatic = mockStatic(IpService.class)) {
+            mockedStatic.when(() -> IpService.getIpAddressFromHeader(any(HttpServletRequest.class)))
+                    .thenReturn("ip");
 
-        AuthRegistrationDTO registrationDTO = authService.registerTrainee("John", "Doe", new Date(), "123 Main St");
-        assertEquals(registrationDTO.getJwtToken(), "jwt-test-token");
+            when(loginAttemptService.isBlocked(authDTO.getUsername(), "ip")).thenReturn(false);
+
+            Authentication authentication = mock(Authentication.class);
+            when(authenticationManager.authenticate(any(UsernamePasswordAuthenticationToken.class)))
+                    .thenReturn(authentication);
+            when(authentication.isAuthenticated()).thenReturn(true);
+
+            when(userService.generateUniqueUsername("John", "Doe")).thenReturn("testuser");
+            when(userService.generateRandom_10CharsPassword()).thenReturn("password123".toCharArray());
+            when(traineeService.addTrainee(any(AuthDTO.class), any(TraineeBasicProfileDTO.class)))
+                    .thenReturn(trainee);
+            when(jwtTokenService.generateToken("testuser")).thenReturn("jwt-test-token");
+
+            HttpServletRequest mockRequest = mock(HttpServletRequest.class);
+            AuthRegistrationDTO registrationDTO = authService.registerTrainee("John", "Doe", new Date(), "123 Main St", mockRequest);
+
+            assertEquals("jwt-test-token", registrationDTO.getJwtToken());
+
+            verify(loginAttemptService).isBlocked(authDTO.getUsername(), "ip");
+            verify(authenticationManager).authenticate(any(UsernamePasswordAuthenticationToken.class));
+            verify(userService).generateUniqueUsername("John", "Doe");
+            verify(userService).generateRandom_10CharsPassword();
+            verify(traineeService).addTrainee(any(AuthDTO.class), any(TraineeBasicProfileDTO.class));
+            verify(jwtTokenService).generateToken("testuser");
+        }
     }
 
     @Test
     void registerTrainerTest() {
+        // Arrange
         AuthDTO authDTO = new AuthDTO("testuser", "password123");
         User user = User.builder()
                 .firthName("John")
                 .secondName("Doe")
                 .username("testuser")
                 .password("encodedpassword")
-                .isActive(true).build();
-        Trainer trainer = Trainer.builder().user(user).specialization(new TrainingType()).build();
+                .isActive(true)
+                .build();
+        Trainer trainer = Trainer.builder()
+                .user(user)
+                .specialization(new TrainingType())
+                .build();
 
-        Mockito.when(loginAttemptService.isBlocked(authDTO.getUsername()))
-                .thenReturn(false);
-        Authentication authentication = Mockito.mock(Authentication.class);
-        Mockito.when(authenticationManager.authenticate(any(UsernamePasswordAuthenticationToken.class)))
-                .thenReturn(authentication);
-        Mockito.when(authentication.isAuthenticated())
-                .thenReturn(true);
-        Mockito.when(userService.generateUniqueUsername("John", "Doe")).thenReturn("testuser");
-        Mockito.when(userService.generateRandom_10CharsPassword()).thenReturn("password123".toCharArray());
-        Mockito.when(trainerService.addTrainer(any(AuthDTO.class),any(TrainerBasicProfileDTO.class), any(TrainingType.class)))
-                .thenReturn(trainer);
-        Mockito.when(jwtTokenService.generateToken("testuser"))
-                .thenReturn("jwt-test-token");
+        try (MockedStatic<IpService> mockedStatic = mockStatic(IpService.class)) {
+            mockedStatic.when(() -> IpService.getIpAddressFromHeader(any(HttpServletRequest.class)))
+                    .thenReturn("ip");
 
-        AuthRegistrationDTO registrationDTO = authService.registerTrainer("John", "Doe",  new TrainingType());
-        assertEquals(registrationDTO.getJwtToken(), "jwt-test-token");
+            when(loginAttemptService.isBlocked(authDTO.getUsername(), "ip")).thenReturn(false);
+
+            Authentication authentication = mock(Authentication.class);
+            when(authenticationManager.authenticate(any(UsernamePasswordAuthenticationToken.class)))
+                    .thenReturn(authentication);
+            when(authentication.isAuthenticated()).thenReturn(true);
+
+            when(userService.generateUniqueUsername("John", "Doe")).thenReturn("testuser");
+            when(userService.generateRandom_10CharsPassword()).thenReturn("password123".toCharArray());
+            when(trainerService.addTrainer(any(AuthDTO.class), any(TrainerBasicProfileDTO.class), any(TrainingType.class)))
+                    .thenReturn(trainer);
+            when(jwtTokenService.generateToken("testuser")).thenReturn("jwt-test-token");
+
+            HttpServletRequest mockRequest = mock(HttpServletRequest.class);
+            AuthRegistrationDTO registrationDTO = authService.registerTrainer("John", "Doe", new TrainingType(), mockRequest);
+
+            assertEquals("jwt-test-token", registrationDTO.getJwtToken());
+
+            verify(loginAttemptService).isBlocked(authDTO.getUsername(), "ip");
+            verify(authenticationManager).authenticate(any(UsernamePasswordAuthenticationToken.class));
+            verify(userService).generateUniqueUsername("John", "Doe");
+            verify(userService).generateRandom_10CharsPassword();
+            verify(trainerService).addTrainer(any(AuthDTO.class), any(TrainerBasicProfileDTO.class), any(TrainingType.class));
+            verify(jwtTokenService).generateToken("testuser");
+        }
     }
 
     @Test
-    void loginWithBadCredentials(){
+    void loginWithBadCredentials() {
         AuthDTO authDTO = new AuthDTO("testuser", "bad-password123");
 
-        Mockito.when(loginAttemptService.isBlocked(authDTO.getUsername()))
-                .thenReturn(false);
-        Authentication authentication = Mockito.mock(Authentication.class);
-        Mockito.when(authenticationManager.authenticate(any(UsernamePasswordAuthenticationToken.class)))
-                .thenReturn(authentication);
-        Mockito.when(authentication.isAuthenticated())
-                .thenReturn(false);
+        try (MockedStatic<IpService> mockedStatic = mockStatic(IpService.class)) {
+            mockedStatic.when(() -> IpService.getIpAddressFromHeader(any(HttpServletRequest.class)))
+                    .thenReturn("ip");
 
-        BadAuthenticationDataException exception = assertThrows(
-                BadAuthenticationDataException.class,
-                () -> authService.login(authDTO));
+            when(loginAttemptService.isBlocked(authDTO.getUsername(), "ip")).thenReturn(false);
 
-        assertEquals(exception.getMessage(), ExceptionMessage.badAuthenticationData());
+            Authentication authentication = mock(Authentication.class);
+            when(authenticationManager.authenticate(any(UsernamePasswordAuthenticationToken.class)))
+                    .thenReturn(authentication);
+            when(authentication.isAuthenticated()).thenReturn(false);
+
+            BadAuthenticationDataException exception = assertThrows(
+                    BadAuthenticationDataException.class,
+                    () -> authService.login(authDTO, mock(HttpServletRequest.class))
+            );
+
+            assertEquals(ExceptionMessage.badAuthenticationData(), exception.getMessage());
+        }
     }
 
     @Test
-    void loginWithBadData(){
+    void loginWithBadData() {
         AuthDTO authDTO = new AuthDTO("testuser", "bad-password123");
 
-        Mockito.when(loginAttemptService.isBlocked(authDTO.getUsername()))
-                .thenReturn(false);
-        Mockito.when(authenticationManager.authenticate(any(UsernamePasswordAuthenticationToken.class)))
-                .thenThrow(new BadCredentialsException(""));
+        try (MockedStatic<IpService> mockedStatic = mockStatic(IpService.class)) {
+            mockedStatic.when(() -> IpService.getIpAddressFromHeader(any(HttpServletRequest.class)))
+                    .thenReturn("ip");
 
-        BadAuthenticationDataException exception = assertThrows(
-                BadAuthenticationDataException.class,
-                () -> authService.login(authDTO));
+            when(loginAttemptService.isBlocked(authDTO.getUsername(), "ip")).thenReturn(false);
+            when(authenticationManager.authenticate(any(UsernamePasswordAuthenticationToken.class)))
+                    .thenThrow(new BadCredentialsException(""));
 
-        assertEquals(exception.getMessage(), ExceptionMessage.badAuthenticationData());
+            BadAuthenticationDataException exception = assertThrows(
+                    BadAuthenticationDataException.class,
+                    () -> authService.login(authDTO, mock(HttpServletRequest.class))
+            );
+
+            assertEquals(ExceptionMessage.badAuthenticationData(), exception.getMessage());
+        }
     }
 
     @Test
-    void changePasswordTest(){
-        ChangeLoginDTO changeLoginDTO = ChangeLoginDTO.builder().username("testuser").password("password123").newPassword("new-password").build();
+    void changePasswordTest() {
+        ChangeLoginDTO changeLoginDTO = ChangeLoginDTO.builder()
+                .username("testuser")
+                .password("password123")
+                .newPassword("new-password")
+                .build();
         AuthDTO authDTO = new AuthDTO("testuser", "password123");
 
-        Mockito.when(loginAttemptService.isBlocked(authDTO.getUsername()))
-                .thenReturn(false);
-        Authentication authentication = Mockito.mock(Authentication.class);
-        Mockito.when(authenticationManager.authenticate(any(UsernamePasswordAuthenticationToken.class)))
-                .thenReturn(authentication);
-        Mockito.when(authentication.isAuthenticated())
-                .thenReturn(true);
-        Mockito.when(passwordEncoder.encode(changeLoginDTO.getNewPassword())).thenReturn(changeLoginDTO.getNewPassword());
-        Mockito.when(jwtTokenService.generateToken("testuser"))
-                .thenReturn("jwt-test-token");
+        try (MockedStatic<IpService> mockedStatic = mockStatic(IpService.class)) {
+            mockedStatic.when(() -> IpService.getIpAddressFromHeader(any(HttpServletRequest.class)))
+                    .thenReturn("ip");
 
-        String token = (String) authService.changeLogin(changeLoginDTO).get("jwt");
+            when(loginAttemptService.isBlocked(authDTO.getUsername(), "ip")).thenReturn(false);
 
-        Mockito.verify(userDAO, times(1)).changePassword(authDTO.getUsername(), changeLoginDTO.getNewPassword());
-        assertEquals(token, "jwt-test-token");
+            Authentication authentication = mock(Authentication.class);
+            when(authenticationManager.authenticate(any(UsernamePasswordAuthenticationToken.class)))
+                    .thenReturn(authentication);
+            when(authentication.isAuthenticated()).thenReturn(true);
+
+            when(passwordEncoder.encode(changeLoginDTO.getNewPassword())).thenReturn(changeLoginDTO.getNewPassword());
+            when(jwtTokenService.generateToken("testuser")).thenReturn("jwt-test-token");
+
+            HttpServletRequest mockRequest = mock(HttpServletRequest.class);
+            String token = (String) authService.changeLogin(changeLoginDTO, mockRequest).get("jwt");
+
+            assertEquals("jwt-test-token", token);
+
+            verify(userDAO).changePassword(authDTO.getUsername(), changeLoginDTO.getNewPassword());
+        }
     }
 
     @Test
-    void changePassword_WithBadCredentialsTest(){
-        ChangeLoginDTO changeLoginDTO = ChangeLoginDTO.builder().username("testuser").password("password123").newPassword("new-password").build();
+    void changePassword_WithBadCredentialsTest() {
+        ChangeLoginDTO changeLoginDTO = ChangeLoginDTO.builder()
+                .username("testuser")
+                .password("password123")
+                .newPassword("new-password")
+                .build();
         AuthDTO authDTO = new AuthDTO("testuser", "password123");
 
-        Mockito.when(loginAttemptService.isBlocked(authDTO.getUsername()))
-                .thenReturn(false);
-        Authentication authentication = Mockito.mock(Authentication.class);
-        Mockito.when(authenticationManager.authenticate(any(UsernamePasswordAuthenticationToken.class)))
-                .thenReturn(authentication);
-        Mockito.when(authentication.isAuthenticated())
-                .thenReturn(false);
+        try (MockedStatic<IpService> mockedStatic = mockStatic(IpService.class)) {
+            mockedStatic.when(() -> IpService.getIpAddressFromHeader(any(HttpServletRequest.class)))
+                    .thenReturn("ip");
 
-        BadAuthenticationDataException exception = assertThrows(
-                BadAuthenticationDataException.class,
-                () -> authService.changeLogin(changeLoginDTO));
+            when(loginAttemptService.isBlocked(authDTO.getUsername(), "ip")).thenReturn(false);
 
-        assertEquals(exception.getMessage(), ExceptionMessage.badAuthenticationData());
+            Authentication authentication = mock(Authentication.class);
+            when(authenticationManager.authenticate(any(UsernamePasswordAuthenticationToken.class)))
+                    .thenReturn(authentication);
+            when(authentication.isAuthenticated()).thenReturn(false);
+
+            BadAuthenticationDataException exception = assertThrows(
+                    BadAuthenticationDataException.class,
+                    () -> authService.changeLogin(changeLoginDTO, mock(HttpServletRequest.class))
+            );
+
+            assertEquals(ExceptionMessage.badAuthenticationData(), exception.getMessage());
+        }
     }
 
     @Test
-    void tooManyAffordsToLoginTest(){
+    void tooManyAffordsToLoginTest() {
         AuthDTO authDTO = new AuthDTO("testuser", "bad-password123");
 
-        Mockito.when(loginAttemptService.isBlocked(authDTO.getUsername()))
-                .thenReturn(true);
+        try (MockedStatic<IpService> mockedStatic = mockStatic(IpService.class)) {
+            mockedStatic.when(() -> IpService.getIpAddressFromHeader(any(HttpServletRequest.class)))
+                    .thenReturn("ip");
 
-        BlockedOperationException exception = assertThrows(
-                BlockedOperationException.class,
-                () -> authService.login(authDTO));
+            when(loginAttemptService.isBlocked(authDTO.getUsername(), "ip")).thenReturn(true);
 
-        assertEquals(exception.getMessage(), ExceptionMessage.bruceForceProtection());
+            BlockedOperationException exception = assertThrows(
+                    BlockedOperationException.class,
+                    () -> authService.login(authDTO, mock(HttpServletRequest.class))
+            );
+
+            assertEquals(ExceptionMessage.bruceForceProtection(), exception.getMessage());
+        }
     }
 }
